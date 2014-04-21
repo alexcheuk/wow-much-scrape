@@ -1,0 +1,433 @@
+<!doctype html>
+<html ng-app="Scrape">
+<head>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+<link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="styles/main.css" rel="stylesheet">
+<link href="styles/toastr.min.css" rel="stylesheet">
+<title>WoW, MUCH SCRAPE</title>
+</head>
+<body ng-cloak>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="left">SCRAPELY </h1>
+        <h4 class="left" style="margin-left:10px;"><span class="label label-default">ALPHA</span></h4>
+        <a class="btn btn-primary btn-sm right" role="button" ng-click="root.OpenTrackItemModal()">Track an Item</a>
+        <div class="clear"></div>
+    </div>
+
+    <div class="jumbotron empty-tracking" ng-show="root.tracking.length == 0">
+        <p>You do not have any items tracking</p>
+        <!-- <p><a class="btn btn-primary" role="button" ng-click="root.OpenTrackItemModal()">Track an Item</a></p> -->
+    </div>
+
+    <div class="row" ng-controller="TrackingCtrl">
+        <div class="tracking-panel col-md-4" ng-repeat="(trackindex, trackitem) in root.tracking track by $index">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <p class="left">
+                        <span class="panel-title">{{trackitem.query.n || '--'}}</span>
+                        <br/>
+                        <span style="font-size:10px;">lvl: {{trackitem.query.minLvl}} - {{trackitem.query.maxLvl}}</span>
+                    </p>
+                    <ul class="nav nav-pills navbar-right">
+                      <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                          <span class="glyphicon glyphicon-th-list"></span> <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="{{trackitem.query_url}}" target="_blank"><span class="glyphicon glyphicon-globe"></span> Open in Armory</a>
+                            </li>
+                            <li>
+                                <a href="javascript:;" ng-click="tracking.DeleteTracker($index);"><span class="glyphicon glyphicon-remove"></span> Remove Item</a>
+                            </li>
+                            <li>
+                                <a href="javascript:;" ng-click="tracking.OpenAlertForm($index);"><span class="glyphicon glyphicon-bell"></span> Alert</a>
+                            </li>
+                        </ul>
+                      </li>
+                    </ul>
+                    <div class="clear"></div>
+                </div>
+                <div class="panel-body tracking-result-list">
+                    <ul>
+                        <li ng-show="trackitem.results.length==0" style="color:#fff;text-align:center">No Results</li>
+                        <li ng-repeat="item in trackitem.results track by item.auc_id" class="{{item.quality}}" ng-class="{'list-alert' : item.alert}" >
+                            <div class="left">
+                                <span class="item">{{item.quantity}} x {{item.item}}</span>
+                                <br/>
+                                <span class="seller">{{item.seller}}</span>
+                            </div>
+                            <div class="right">
+                                <p>
+                                    <span class="price icon-gold">{{item.price_buyout_format.gold}}</span>
+                                    <span class="price icon-silver">{{item.price_buyout_format.silver}}</span>
+                                    <span class="price icon-copper">{{item.price_buyout_format.copper}}</span>
+                                    <span style="color:#666;">b/o</span>
+                                </p>
+                                <p>
+                                    <span class="price icon-gold">{{item.price_buyout_per.gold}}</span>
+                                    <span class="price icon-silver">{{item.price_buyout_per.silver}}</span>
+                                    <span class="price icon-copper">{{item.price_buyout_per.copper}}</span>
+                                    <span style="color:#666;">per</span>
+                                </p>
+                            </div>
+                            <div class="clear"></div>
+
+                            <div class="list-buy-overlay">
+                                <a href="javascript:;" class="btn-buyout" ng-click="tracking.BuyOut(trackindex, $index)">BUYOUT</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="AlertModal" tabindex="-1" role="dialog" aria-hidden="true" ng-controller="AlertFormCtrl">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Track an Item</h4>
+            </div>
+            <form role="form" name="TrackItemForm" ng-submit="form.Submit()" id="TrackItemForm">
+                <div class="modal-body">
+                    <div class="form-group form-inline form-gold-group">
+                        <label>When Item Below</label><br/>
+                        <input type="text" class="form-control" ng-model="root.alert_form_data.gold" name="gold" placeholder="Gold">
+                        <input type="text" class="form-control" ng-model="root.alert_form_data.silver" name="silver" placeholder="Silver">
+                        <input type="text" class="form-control" ng-model="root.alert_form_data.copper" name="copper" placeholder="Copper">
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" ng-model="root.alert_form_data.play_sound"> Play Sound
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" ng-model="root.alert_form_data.auto_buy"> Auto Buy
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="form.StopAlert()" ng-show="root.alert_form_data.show_cancel">Stop Alert</button>
+                    <button type="submit" class="btn btn-primary">Update Alert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade " id="TrackItemModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" ng-controller="TrackItemForm">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Track an Item</h4>
+            </div>
+            <form role="form" name="TrackItemForm" ng-submit="form.Submit()" id="TrackItemForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" class="form-control" name="item_name" ng-model="root.search_query.n" placeholder="eg. Spirit of War">
+                    </div>
+
+                    <div class="form-group form-category-group">
+                        <label>Catalog</label>
+                        <br/>
+                        <div class="select">
+                            <select class="form-control" ng-model="root.search_query.tier1">
+                                <option value="-1">All</option>
+                                <option value="0">Weapon</option>
+                                <option value="1">Armor</option>
+                                <option value="2">Container</option>
+                                <option value="3">Consumable</option>
+                                <option value="4">Glyph</option>
+                                <option value="5">Trade Goods</option>
+                                <option value="6">Recipe</option>
+                                <option value="7">Gem</option>
+                                <option value="8">Miscellaneous</option>
+                                <option value="9">Quest</option>
+                                <option value="10">Battle Pets</option>
+                            </select>
+                        </div>
+                        <div class="select">
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == -1" disabled="disabled">
+                                <option value=""></option>
+                            </select>
+
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 0">
+                                <option value="-1">All</option>
+                                    <option value="52">One-Handed Axes</option>
+                                    <option value="51">Two-Handed Axes</option>
+                                    <option value="50">Bows</option>
+                                    <option value="49">Guns</option>
+                                    <option value="57">One-Handed Maces</option>
+                                    <option value="56">Two-Handed Maces</option>
+                                    <option value="55">Polearms</option>
+                                    <option value="53">One-Handed Swords</option>
+                                    <option value="59">Two-Handed Swords</option>
+                                    <option value="58">Staves</option>
+                                    <option value="62">Fist Weapons</option>
+                                    <option value="61">Miscellaneous</option>
+                                    <option value="60">Daggers</option>
+                                    <option value="46">Thrown</option>
+                                    <option value="44">Crossbows</option>
+                                    <option value="45">Wands</option>
+                                    <option value="47">Fishing Poles</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 1">
+                                <option value="-1">All</option>
+                                    <option value="26">Miscellaneous</option>
+                                    <option value="27">Cloth</option>
+                                    <option value="29">Leather</option>
+                                    <option value="31">Mail</option>
+                                    <option value="33">Plate</option>
+                                    <option value="35">Cosmetic</option>
+                                    <option value="37">Shields</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 2">
+                                <option value="-1">All</option>
+                                    <option value="72">Bag</option>
+                                    <option value="73">Herb Bag</option>
+                                    <option value="66">Enchanting Bag</option>
+                                    <option value="64">Engineering Bag</option>
+                                    <option value="70">Gem Bag</option>
+                                    <option value="68">Mining Bag</option>
+                                    <option value="75">Leatherworking Bag</option>
+                                    <option value="74">Inscription Bag</option>
+                                    <option value="78">Tackle Box</option>
+                                    <option value="76">Cooking Bag</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 3">
+                                <option value="-1">All</option>
+                                    <option value="93">Potion</option>
+                                    <option value="95">Elixir</option>
+                                    <option value="97">Flask</option>
+                                    <option value="103">Scroll</option>
+                                    <option value="81">Food &amp; Drink</option>
+                                    <option value="102">Item Enhancement</option>
+                                    <option value="100">Bandage</option>
+                                    <option value="106">Other</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 4">
+                                <option value="-1">All</option>
+                                    <option value="86">Warrior</option>
+                                    <option value="82">Paladin</option>
+                                    <option value="80">Hunter</option>
+                                    <option value="84">Rogue</option>
+                                    <option value="83">Priest</option>
+                                    <option value="90">Death Knight</option>
+                                    <option value="89">Shaman</option>
+                                    <option value="92">Mage</option>
+                                    <option value="91">Warlock</option>
+                                    <option value="88">Monk</option>
+                                    <option value="87">Druid</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 5">
+                                <option value="-1">All</option>
+                                    <option value="107">Parts</option>
+                                    <option value="109">Explosives</option>
+                                    <option value="108">Devices</option>
+                                    <option value="105">Jewelcrafting</option>
+                                    <option value="94">Cloth</option>
+                                    <option value="96">Leather</option>
+                                    <option value="98">Metal &amp; Stone</option>
+                                    <option value="99">Cooking</option>
+                                    <option value="101">Herb</option>
+                                    <option value="85">Elemental</option>
+                                    <option value="111">Other</option>
+                                    <option value="104">Enchanting</option>
+                                    <option value="110">Materials</option>
+                                    <option value="112">Item Enchantment</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 6">
+                                <option value="-1">All</option>
+                                    <option value="11">Book</option>
+                                    <option value="12">Leatherworking</option>
+                                    <option value="13">Tailoring</option>
+                                    <option value="14">Engineering</option>
+                                    <option value="15">Blacksmithing</option>
+                                    <option value="16">Cooking</option>
+                                    <option value="17">Alchemy</option>
+                                    <option value="22">First Aid</option>
+                                    <option value="21">Enchanting</option>
+                                    <option value="20">Fishing</option>
+                                    <option value="19">Jewelcrafting</option>
+                                    <option value="23">Inscription</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 7">
+                                <option value="-1">All</option>
+                                    <option value="48">Red</option>
+                                    <option value="30">Blue</option>
+                                    <option value="28">Yellow</option>
+                                    <option value="34">Purple</option>
+                                    <option value="32">Green</option>
+                                    <option value="39">Orange</option>
+                                    <option value="36">Meta</option>
+                                    <option value="42">Simple</option>
+                                    <option value="41">Prismatic</option>
+                                    <option value="43">Cogwheel</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 8">
+                                <option value="-1">All</option>
+                                    <option value="71">Junk</option>
+                                    <option value="69">Reagent</option>
+                                    <option value="67">Companion Pets</option>
+                                    <option value="65">Holiday</option>
+                                    <option value="63">Other</option>
+                                    <option value="77">Mount</option>
+                            </select>
+                            <select ng-model="root.search_query.tier2" class="form-control" ng-show="root.search_query.tier1 == 9">
+                                <option value="-1">All</option>
+                                    <option value="152">Humanoid</option>
+                                    <option value="153">Dragonkin</option>
+                                    <option value="154">Flying</option>
+                                    <option value="155">Undead</option>
+                                    <option value="156">Critter</option>
+                                    <option value="157">Magic</option>
+                                    <option value="158">Elemental</option>
+                                    <option value="159">Beast</option>
+                                    <option value="160">Aquatic</option>
+                                    <option value="161">Mechanical</option>
+                            </select>
+                        </div>
+                        <div class="select">
+                            <select class="form-control" ng-show="root.search_query.tier2 == -1" disabled="disabled">
+                                <option value=""></option>
+                            </select>
+
+                            <select class="form-control" ng-model="root.search_query.tier3" ng-show="root.search_query.tier2 == 26">
+                                <option value="-1">All</option>
+                                    <option value="113">Head</option>
+                                    <option value="114">Neck</option>
+                                    <option value="115">Shirt</option>
+                                    <option value="116">Finger</option>
+                                    <option value="117">Trinket</option>
+                                    <option value="118">Held in off-hand</option>
+                            </select>
+                            <select class="form-control" ng-model="root.search_query.tier3" ng-show="root.search_query.tier2 == 27">
+                                <option value="-1">All</option>
+                                    <option value="119">Head</option>
+                                    <option value="120">Shoulder</option>
+                                    <option value="121">Chest</option>
+                                    <option value="122">Waist</option>
+                                    <option value="123">Legs</option>
+                                    <option value="124">Feet</option>
+                                    <option value="125">Wrists</option>
+                                    <option value="126">Hands</option>
+                                    <option value="127">Back</option>
+                            </select>
+                            <select class="form-control" ng-model="root.search_query.tier3" ng-show="root.search_query.tier2 == 29">
+                                <option value="-1">All</option>
+                                    <option value="128">Head</option>
+                                    <option value="129">Shoulder</option>
+                                    <option value="130">Chest</option>
+                                    <option value="131">Waist</option>
+                                    <option value="132">Legs</option>
+                                    <option value="133">Feet</option>
+                                    <option value="134">Wrists</option>
+                                    <option value="135">Hands</option>
+                            </select>
+                            <select class="form-control" ng-model="root.search_query.tier3" ng-show="root.search_query.tier2 == 31">
+                                <option value="-1">All</option>
+                                    <option value="136">Head</option>
+                                    <option value="137">Shoulder</option>
+                                    <option value="138">Chest</option>
+                                    <option value="139">Waist</option>
+                                    <option value="140">Legs</option>
+                                    <option value="141">Feet</option>
+                                    <option value="142">Wrists</option>
+                                    <option value="143">Hands</option>
+                            </select>
+                            <select class="form-control" ng-model="root.search_query.tier3" ng-show="root.search_query.tier2 == 33">
+                                <option value="-1">All</option>
+                                    <option value="144">Head</option>
+                                    <option value="145">Shoulder</option>
+                                    <option value="146">Chest</option>
+                                    <option value="147">Waist</option>
+                                    <option value="148">Legs</option>
+                                    <option value="149">Feet</option>
+                                    <option value="150">Wrists</option>
+                                    <option value="151">Hands</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-inline form-level-group">
+                        <label>Level range:</label>
+                        <br/>
+                        <input type="text" class="form-control" ng-model="root.search_query.minLvl"><span> - </span>
+                        <input type="text" class="form-control" ng-model="root.search_query.maxLvl">
+                    </div>
+
+                    <div class="clear"></div>
+
+                    <div class="form-group">
+                        <label>Item Quality</label>
+                        <select class="form-control" name="qual" ng-model="root.search_query.qual">
+                            <option value="0">All</option>
+                            <option value="0">Poor</option>
+                            <option value="1" selected="selected">Common</option>
+                            <option value="2">Uncommon</option>
+                            <option value="3">Rare</option>
+                            <option value="4">Epic</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" ng-disabled="form.chosen_item">Start Tracking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="page-footer" ng-controller="ProfileCtrl">
+    <div class="wrapper">
+        <div class="player-info left">
+            <p class="name">{{profile.player.name}}</p>
+            <p class="class"><strong>{{profile.player.level}}</strong> {{profile.player.raceName}} {{profile.player.className}}</p>
+        </div>
+        <div class="player-gold left">
+            <p class="txt">GOLD:</p>
+            <p><span class="icon-price icon-gold">{{profile.gold.gold}}</span><span class="icon-price icon-silver">{{profile.gold.silver}}</span><span class="icon-price icon-copper">{{profile.gold.copper}}</span></p>
+        </div>
+
+        <div class="player-gold left">
+            <p class="txt">EARNED: </p>
+            <p><span class="icon-price icon-gold">{{profile.earned.gold}}</span><span class="icon-price icon-silver">{{profile.earned.silver}}</span><span class="icon-price icon-copper">{{profile.earned.copper}}</span> <a href="javascript:;" class="btn-claim" ng-click="profile.ClaimMoney()" ng-show="profile.mail_sold.length">CLAIM</a></p>
+        </div>
+
+        <div class="scrape-stats right">
+            <ul>
+                <li>
+                    <span>AUCTIONS WON</span> : {{profile.auction_won}} 
+                </li>
+
+                <li>
+                    <span>AUCTIONS SOLD</span> : {{profile.auction_sold}} 
+                </li>
+
+                <li>
+                    <span>AUTO BOUGHT</span> : {{root.auto_bought}} 
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- build:js scripts/popup.js -->
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="scripts/popup.js"></script>
+<script src="scripts/toastr.min.js"></script>
+<!-- endbuild -->
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!doctype html>
+<html ng-app="Scrape" ng-csp>
+<head>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+<link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="bower_components/angular/angular-csp.css" rel="stylesheet">
+<link href="styles/main.css" rel="stylesheet">
+<link href="styles/toastr.min.css" rel="stylesheet">
+<title>WoW, MUCH SCRAPE</title>
+</head>
+<body ng-cloak>
+
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="left">SCRAPELY </h1>
+        <h4 class="left" style="margin-left:10px;"><span class="label label-default">ALPHA</span></h4>
+
+        <a class="btn btn-primary btn-sm right" role="button" ng-click="root.OpenTrackItemModal()">Track an Item</a>
+        <div class="btn-group right navbar-right">
+            <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
+                History <span class="badge" ng-class="{'new' : root.history_count > 0}">{{root.history_count}}</span>
+            </button>
+            <div class="dropdown-menu history-list" role="menu">
+                <li ng-repeat="history in root.history | history_filter | filter:history_func track by $index">
+                    <p class="left">{{history.item_name}} x {{history.quantity}}<br/><span ng-bind-html="history.price | money_format"></span></p> <span class="right">{{history.time | time_format}}<br/>{{history.auc_id}}</span>
+                    <div class="clear"></div>
+                </li>
+            </div>
+        </div>
+
+        <div class="btn-group right navbar-right">
+            <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
+                Auctions <span class="badge">{{root.auctions.active.length + root.auctions.sold.length + root.auctions.ended.length}}</span>
+            </button>
+            <div class="dropdown-menu history-list auctions-list" role="menu">
+                <div class="auction-header">ACTIVE</div>
+                <ul>
+                    <li ng-show="root.auctions.active.length==0">None</li>
+                    <li ng-repeat="item in root.auctions.active">
+                        <p class="left {{item.quality}}">
+                            <span>{{item.item}} x {{item.quantity}}</span><br/>
+                            <span ng-bind-html="item.price_buyout | money_format"></span>
+                        </p>
+                        <div class="clear"></div>
+                    </li>
+                </ul>
+
+                <div class="auction-header">SOLD</div>
+                <ul>
+                    <li ng-show="root.auctions.sold.length==0">None</li>
+                    <li ng-repeat="item in root.auctions.sold">
+                        <p class="left {{item.quality}}">
+                            <span>{{item.item}} x {{item.quantity}}</span><br/>
+                            <span ng-bind-html="item.bought_price | money_format"></span>
+                        </p>
+                        <div class="clear"></div>
+                    </li>
+                </ul>
+
+                <div class="auction-header">ENDED</div>
+                <ul>
+                    <li ng-show="root.auctions.ended.length==0">None</li>
+                    <li ng-repeat="item in root.auctions.ended">
+                        <p class="left {{item.quality}}">
+                            <span>{{item.item}} x {{item.quantity}}</span><br/>
+                        </p>
+                        <div class="clear"></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="btn-group right navbar-right">
+            <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
+                Inventory
+            </button>
+            <div class="dropdown-menu history-list" role="menu">
+                <li ng-repeat="item in root.inventory">
+                    <span class="left color-q{{item.quality}}">{{item.name}} x {{item.q0}}</span>
+                    <div class="clear"></div>
+                </li>
+            </div>
+        </div>
+
+         <a class="btn btn-sm right btn-autobuy" ng-class="{'btn-warning' : !root.auto_buy, 'btn-danger' : root.auto_buy}" ng-click="root.toggle_autobuy()">Auto Buy <span class="badge">{{root.auto_buy ? "ON" : "OFF"}}</span></a>
+
+        <div class="clear"></div>
+    </div>
+
+    <div class="jumbotron empty-tracking" ng-show="root.tracking.length == 0">
+        <p>You do not have any items tracking</p>
+        <!-- <p><a class="btn btn-primary" role="button" ng-click="root.OpenTrackItemModal()">Track an Item</a></p> -->
+    </div>
+
+    <div class="row" ng-controller="TrackingCtrl">
+        <div class="tracking-panel col-lg-3 col-md-6" ng-repeat="(trackindex, trackitem) in root.tracking track by $index">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <p class="left">
+                        <span class="panel-title">{{trackitem.item.name || '--'}}</span>
+                        <br/>
+                        <span style="font-size:10px;color:#111;">YOU HAVE: {{trackitem.stock || 0}}</span>
+                    </p>
+                    <ul class="nav nav-pills navbar-right">
+                        <li
+                            ng-show="trackitem.alert_condition"
+                            tooltip-placement="top"
+                            tooltip-html-unsafe="Auto Buy : {{trackitem.alert_condition.auto_buy ? 'on' : 'off'}}<br/>Less Than : {{trackitem.alert_condition.less_than | money_format}}"
+                            ng-click="tracking.toggle_autobuy($index);"
+                        >
+                            <a href="javascript:;" class="tracker-alert-icon" >
+                                <span class="glyphicon glyphicon-bell" 
+                                    ng-class="{
+                                        'glyphicon-bell' : !trackitem.alert_condition.auto_buy || !root.auto_buy ,
+                                        'glyphicon-usd' : trackitem.alert_condition.auto_buy && root.auto_buy 
+                                    }"></span>
+                            </a>
+                        </li>
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                              <span class="glyphicon glyphicon-th-list"></span> <span class="caret"></span>
+                            </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="{{trackitem.query_url}}" target="_blank"><span class="glyphicon glyphicon-globe"></span> Open in Armory</a>
+                            </li>
+                            <li>
+                                <a href="javascript:;" ng-click="tracking.OpenSellForm($index);"><span class="glyphicon glyphicon-transfer"></span> Sell Inventory</a>
+                            </li>
+                            <li>
+                                <a href="javascript:;" ng-click="tracking.OpenAlertForm($index);"><span class="glyphicon glyphicon-bell"></span> Manage Alerts</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                                <a href="javascript:;" ng-click="tracking.DeleteTracker($index);"><span class="glyphicon glyphicon-remove"></span> Remove Item</a>
+                            </li>
+                        </ul>
+                      </li>
+                    </ul>
+                    <div class="clear"></div>
+                </div>
+                <div class="panel-body tracking-result-list">
+                    <ul>
+                        <li ng-show="trackitem.results.length==0" style="color:#fff;text-align:center">No Results</li>
+                        <li ng-repeat="item in trackitem.results track by item.auc_id" class="{{item.quality}}" ng-class="{'list-alert' : item.alert}" >
+                            <div class="col-xs-7">
+                                <span class="item">{{item.quantity}} x {{item.item}}</span>
+                                <br/>
+                                <span class="seller">{{item.seller}}</span>
+                            </div>
+                            <div class="col-xs-5">
+                                <p>
+                                    <span class="price icon-gold">{{item.price_buyout_format.gold}}</span>
+                                    <span class="price icon-silver">{{item.price_buyout_format.silver}}</span>
+                                    <span class="price icon-copper">{{item.price_buyout_format.copper}}</span>
+                                    <span style="color:#666;" class="price-label">b/o</span>
+                                </p>
+                                <p>
+                                    <span class="price icon-gold">{{item.price_buyout_per.gold}}</span>
+                                    <span class="price icon-silver">{{item.price_buyout_per.silver}}</span>
+                                    <span class="price icon-copper">{{item.price_buyout_per.copper}}</span>
+                                    <span style="color:#666;" class="price-label">per</span>
+                                </p>
+                            </div>
+                            <div class="clear"></div>
+
+                            <div class="list-buy-overlay">
+                                <a href="javascript:;" class="btn-buyout" ng-click="tracking.BuyOut(trackindex, $index)">BUYOUT</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="SellModal" tabindex="-1" role="dialog" aria-hidden="true" ng-controller="SellFormCtrl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Sell - <span style="text-transform:capitalize">{{root.tracking[root.alertform_editing_index].item.name}}</span></h4>
+                <h5>You have : {{root.tracking[root.alertform_editing_index].stock}}</h5>
+            </div>
+            <form role="form" name="TrackItemForm" ng-submit="form.Submit()" id="TrackItemForm">
+                <div class="modal-body">
+                    <div class="form-group" style="width:50%">
+                        <label>Stack Size</label><br/>
+                        <input type="number" select-on-click class="form-control" ng-model="root.sell_form_data.stack_size" name="stack_size">
+                    </div>
+                    <div class="form-group" style="width:50%">
+                        <label># of Stacks</label><br/>
+                        <input type="number" select-on-click class="form-control" ng-model="root.sell_form_data.quantity" name="quantity">
+                    </div>
+                    <div class="form-group" style="width:50%">
+                        <label>Price Type</label><br/>
+                        <select ng-model="root.sell_form_data.price_type" class="form-control">
+                            <option value="perItem">Per Item</option>
+                            <option value="perStack">Per Stack</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group form-inline form-gold-group">
+                        <label>Starting Price</label><br/>
+                        <input type="number" select-on-click class="form-control" ng-model="root.sell_form_data.starting.gold" name="gold" placeholder="Gold">
+                        <input type="number" select-on-click maxlength="2" class="form-control" ng-model="root.sell_form_data.starting.silver" name="silver" placeholder="Silver">
+                        <input type="number" select-on-click maxlength="2" class="form-control" ng-model="root.sell_form_data.starting.copper" name="copper" placeholder="Copper">
+                    </div>
+                    <div class="form-group form-inline form-gold-group">
+                        <label>Buyout Price</label><br/>
+                        <input type="number" select-on-click class="form-control" ng-model="root.sell_form_data.buyout.gold" name="gold" placeholder="Gold">
+                        <input type="number" select-on-click maxlength="2" class="form-control" ng-model="root.sell_form_data.buyout.silver" name="silver" placeholder="Silver">
+                        <input type="number" select-on-click maxlength="2" class="form-control" ng-model="root.sell_form_data.buyout.copper" name="copper" placeholder="Copper">
+                        <p style="padding:8px; color:#fff;background:#222;display:inline-block;margin-left:10px;">Currently lowest: <span ng-bind-html="(root.current_modal_tracker.results[0].price_buyout/root.current_modal_tracker.results[0].quantity) | money_format"></span></p>
+                    </div>
+                    <progressbar class="progress-striped active" value="sellform.create_progress" type="{{sellform.progress_type}}" ng-show="sellform.creating_auction"></progressbar>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">CREATE AUCTION</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="AlertModal" tabindex="-1" role="dialog" aria-hidden="true" ng-controller="AlertFormCtrl">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Track an Item</h4>
+            </div>
+            <form role="form" name="TrackItemForm" ng-submit="form.Submit()" id="TrackItemForm">
+                <div class="modal-body">
+                    <div class="form-group form-inline form-gold-group">
+                        <label>When Item Below</label><br/>
+                        <input type="number" class="form-control" ng-model="root.alert_form_data.gold" name="gold" placeholder="Gold">
+                        <input type="number" maxlength="2" class="form-control" ng-model="root.alert_form_data.silver" name="silver" placeholder="">
+                        <input type="number" maxlength="2" class="form-control" ng-model="root.alert_form_data.copper" name="copper" placeholder="">
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" ng-model="root.alert_form_data.play_sound"> Play Sound
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" ng-model="root.alert_form_data.auto_buy"> Auto Buy
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" ng-click="form.StopAlert()" ng-show="root.alert_form_data.show_cancel">Stop Alert</button>
+                    <button type="submit" class="btn btn-primary">Update Alert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade " id="TrackItemModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" ng-controller="TrackItemForm">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Track an Item</h4>
+            </div>
+            <form role="form" name="TrackItemForm" ng-submit="form.Submit()" id="TrackItemForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" class="form-control" name="item_name" placeholder="eg. Spirit of War" ng-type="form.search_item" ng-model="root.search_item_name">
+                    </div>
+
+                    <div class="form-group" ng-show="root.search_results.length">
+                        <label>Item Results</label>
+                        <ul class="search_results">
+                            <li ng-repeat="item in root.search_results" class="color-q{{item.qualityid}}" ng-click="form.choose_search_item($index)">{{item.name}}</li>
+                        </ul>
+                    </div>
+                </div>
+               <!--  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" ng-disabled="form.chosen_item">Start Tracking</button>
+                </div> -->
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="page-footer" ng-controller="ProfileCtrl">
+    <div class="container">
+        <div class="player-info left">
+            <p class="name">{{profile.player.name}}</p>
+            <p class="class"><strong>{{profile.player.level}}</strong> {{profile.player.raceName}} {{profile.player.className}}</p>
+        </div>
+        <div class="player-gold left">
+            <p class="txt">GOLD:</p>
+            <p><span class="icon-price icon-gold">{{profile.gold.gold}}</span><span class="icon-price icon-silver">{{profile.gold.silver}}</span><span class="icon-price icon-copper">{{profile.gold.copper}}</span></p>
+        </div>
+
+        <div class="player-gold left">
+            <p class="txt">EARNED: </p>
+            <p><span class="icon-price icon-gold">{{profile.earned.gold}}</span><span class="icon-price icon-silver">{{profile.earned.silver}}</span><span class="icon-price icon-copper">{{profile.earned.copper}}</span> <a href="javascript:;" class="btn-claim" ng-click="profile.ClaimMoney()" ng-show="profile.mail_sold.length">CLAIM</a></p>
+        </div>
+
+        <div class="player-gold left">
+            <p class="txt">TOTAL: </p>
+            <p><span class="icon-price icon-gold">{{profile.total.gold}}</span><span class="icon-price icon-silver">{{profile.total.silver}}</span><span class="icon-price icon-copper">{{profile.total.copper}}</span></p>
+        </div>
+
+        <div class="scrape-stats right">
+            <ul>
+                <li>
+                    <span>AUCTIONS WON</span> : {{profile.auction_won}} 
+                </li>
+
+                <li>
+                    <span>AUCTIONS SOLD</span> : {{profile.auction_sold}} 
+                </li>
+
+                <li>
+                    <span>AUTO BOUGHT</span> : {{root.auto_bought}} 
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- build:js scripts/popup.js -->
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/momentjs/min/moment.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="bower_components/ui-bootstrap-0.10.0.min.js"></script>
+
+<script src="scripts/app/app.js"></script>
+<script src="scripts/app/filter.js"></script>
+<script src="scripts/app/services.js"></script>
+<script src="scripts/app/directive.js"></script>
+
+
+<script src="scripts/toastr.min.js"></script>
+<script src="scripts/xml2json.js"></script>
+<!-- endbuild -->
+</body>
+</html>

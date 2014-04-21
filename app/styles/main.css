@@ -1,0 +1,426 @@
+/* Will be compiled down to a single stylesheet with your sass files */
+
+body {
+    /* Defaults css for cssmin process */
+    font-family: 'Open Sans', sans-serif;
+    font-size: 11px;
+    color : #333;
+    padding-bottom:80px;
+}
+
+.color-q0, .color-q0 a { color: #9d9d9d !important; } /* poor (gray) */
+.color-q1, .color-q1 a { color: #ffffff !important; } /* common (white) */
+.color-q2, .color-q2 a { color: #1eff00 !important; } /* uncommon (green) */
+.color-q3, .color-q3 a { color: #0081ff !important; } /* #0070dd rare (blue) */
+.color-q4, .color-q4 a { color: #c600ff !important; } /* #a335ee epic (purple) */
+.color-q5, .color-q5 a { color: #ff8000 !important; } /* lengendary (orange) */
+.color-q6, .color-q6 a { color: #e5cc80 !important; } /* artifact (gold) */
+.color-q7, .color-q7 a { color: #e5cc80 !important; } /* heirloom (gold) */
+
+.icon-price{
+	padding-right: 15px;
+	background: no-repeat right;
+	margin-right:5px;
+}
+
+.icon-gold { color: #c28a13; display: inline-block; }
+.icon-silver { color: #A1A19E; width: 20px; display: inline-block; }
+.icon-copper { color: #a04d00; width: 20px; display: inline-block; }
+
+.icon-price.icon-gold { color: #c28a13; display: inline-block; background-image:url(../images/gold.gif);}
+.icon-price.icon-silver { color: #A1A19E; width: auto; display: inline-block; background-image:url(../images/silver.gif);}
+.icon-price.icon-copper { color: #a04d00; width: auto; display: inline-block; background-image:url(../images/copper.gif);}
+
+.wrapper{
+	width:1000px;
+	margin:0 auto;
+}
+
+.clear{
+	clear:both;
+}
+
+.left{
+	float:left;
+}
+
+.right{
+	float:right;
+}
+
+h1{
+	font-weight: bold;
+	color: #09c;
+}
+
+.page-header .btn{
+	margin-top:30px;
+}
+
+.page-header .btn-group{
+	margin-right:10px;
+}
+
+.page-header .btn-group .badge{
+	font-size:11px;
+	top:0;
+	margin-left:5px;
+	padding: 2px 7px;
+}
+
+.page-header .btn-group .badge.new{
+	color:#fff;
+	background:#c00;
+}
+
+.page-header .btn-autobuy{
+	margin-right:10px;
+}
+
+.btn-autobuy .badge{
+	margin-left:5px;
+	font-size:10px;
+}
+
+.empty-tracking{
+	text-align: center;
+}
+
+/*** TRACKING FORM ***/
+
+#TrackItemForm .list-group li{
+	background:#191919;
+}
+
+#TrackItemForm .list-group .item{
+	font-weight: bold;
+	font-family: Arial;
+}
+
+#TrackItemForm .list-group small{
+	font-size:10px;
+	color:#999;
+	float:right;
+}
+
+.form-category-group .select{
+	display:inline-block;
+	width:135px;
+}
+
+.form-category-group{
+	float:left;
+}
+
+.form-level-group{
+	float:left;
+	margin-left: 27px;
+}
+
+.form-level-group input{
+	width:50px !important;
+}
+
+.form-level-group span{
+	padding: 0 5px;
+}
+
+.search_results{
+	padding:0;
+	margin:0;
+}
+
+.search_results li{
+	list-style: none;
+	padding:0;
+	margin:0;
+
+	background:#222;
+	padding: 8px 15px;
+	color:#fff;
+	font-size:12px;
+	text-transform: capitalize;
+	margin-bottom:2px;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+/*** TRACKING PANEL ***/
+
+.tracking-panel .navbar-right{
+	float:right;
+}
+
+.tracking-panel .panel-heading{
+	background: #428bca;
+	color:#fff;
+}
+
+.panel-heading .tooltip-inner{
+	text-align:left;
+	/*max-width:250px;*/
+	width:250px;
+	font-size:11px;
+	padding:8px 10px;
+}
+
+.tracking-panel .panel-heading p{
+	margin:0;
+}
+
+.tracking-panel .panel-heading .nav-pills a{
+	background: #356FA2;
+	padding:5px 8px;
+	color:#fff;
+	font-size:11px;
+}
+
+.tracking-panel .panel-heading .nav-pills a:hover{
+	background: #285379
+}
+
+.tracking-panel .panel-heading .dropdown-menu{
+	background: #fff;
+}
+
+.tracking-panel .panel-heading .dropdown-menu a{
+	background: #fff;
+	color:#333;
+}
+
+.tracking-panel .panel-heading .dropdown-menu a:hover{
+	background: #eee;
+	color:#333;
+}
+
+
+.tracking-panel .panel-title{
+	text-transform: uppercase;
+	font-size:10px;
+}
+
+.tracking-panel .panel-body{
+	padding:0;
+	max-height:350px;
+	overflow: auto;
+}
+
+.tracker-alert-icon{
+	margin-right:5px;
+	color:yellow !important;
+}
+
+.tracking-result-list ul{
+	margin:0;
+	padding:0;
+	background:#333;
+}
+
+.tracking-result-list li{
+	list-style:none;
+	padding:10px 0px;
+	border-bottom:1px solid #444;
+	position: relative;
+}
+
+.tracking-result-list li.list-alert{
+	box-shadow: inset 0 0 10px yellow;
+}
+
+.list-buy-overlay{
+	position: absolute;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	background: linear-gradient(to right, rgba(0,0,0,1) 20%,rgba(0,0,0,0) 100%); /* W3C */
+	display: none;
+}
+
+.tracking-result-list li:hover .list-buy-overlay{
+	display:block;
+}
+
+a.btn-buyout{
+	background:#444;
+	color:#fff !important;
+	display: inline-block;
+	text-decoration: none !important;
+	padding: 4px 8px;
+	margin-top: 18px;
+	margin-left: 15px;
+}
+
+a.btn-buyout:hover{
+	background:#333;
+}
+
+.tracking-result-list .item{
+	font-weight: bold;
+}
+
+.tracking-result-list .seller{
+	color: #ffb100;
+}
+
+.tracking-result-list .price{
+	padding:0 5px;
+	text-align: right
+}
+
+.tracking-result-list p{
+	margin-bottom:5px;
+	text-align: right;
+}
+
+@media (min-width: 992px){
+	.tracking-result-list .item{
+		font-weight: normal;
+	}
+
+	.price-label{
+		display:none;
+	}
+}
+
+/*** ALERT FORM ***/
+
+.form-gold-group input[type="number"]{
+	width:84px !important;
+	display: inline-block;
+}
+
+.form-gold-group input[maxlength="2"]{
+	width: 65px !important;
+}
+
+#SellModal .progress{
+	margin-bottom:0;
+}
+
+
+/*** PAGE FOOTER ***/
+
+.page-footer{
+	position: fixed;
+	bottom:0;
+	left:0;
+	right:0;
+	height:50px;
+	background:rgba(0,0,0,0.85);
+}
+
+.page-footer p{
+	margin:0;
+}
+
+
+.player-info{
+	padding-top:6px;
+}
+
+
+.player-info .name{
+	color:#fff;
+	font-weight: bold;
+	font-size:14px;
+}
+
+.player-info .class{
+	color:#09c;
+}
+
+.player-gold{
+	margin-left:40px;
+}
+
+.player-gold p{
+	/*line-height:50px;*/
+	font-size:12px;
+}
+
+.player-gold .txt{
+	margin-top:8px;
+	color:#eee;
+	font-size: 10px;
+	margin-bottom:3px;
+}
+
+.scrape-stats li{
+	list-style: none;
+	color:#fff;
+	line-height : 50px;
+	display:inline-block;
+	padding-left: 20px;
+}
+
+.scrape-stats li:first-child{
+	padding:0;
+}
+
+.btn-claim{
+	display: inline-block;
+	font-size:11px;
+	color:#9c0;
+}
+
+/*** HISTORY LIST ***/
+
+.history-list{
+	width:350px !important;
+	max-height: 500px;
+	overflow: auto;
+	background:#333;
+	padding:5px;
+}
+.history-list li{
+	padding:6px 15px;
+	font-size:13px;
+	background:#333;
+	border-bottom:1px solid #444;
+	color:#fff;
+}
+
+.history-list li:last-child{
+	border-bottom: none;
+}
+
+.history-list .right{
+	color:#999;
+	font-size:12px;
+}
+
+/*** HISTORY LIST ***/
+
+.auctions-list{
+	padding:5px;
+}
+.auctions-list ul{
+	margin:0;
+	padding:0;
+	list-style: none;
+}
+.auctions-list li{
+	list-style: none;
+	padding: 10px 15px;
+}
+
+.auctions-list ul li:last-child{
+	border-bottom:none;
+}
+
+.auctions-list li p{
+	margin:0;
+}
+
+.auctions-list ul{
+	margin-bottom:10px;
+}
+
+.auction-header{
+	background:#222;
+	color:#fff;
+	font-size:12px;
+
+	padding: 6px 15px;
+}
